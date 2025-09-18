@@ -130,6 +130,12 @@ func (s *SpotifyService) SubmitTrackToPDS(did string, track *models.Track, ctx c
 }
 
 func (s *SpotifyService) SetAccessToken(token string, refreshToken string, userId int64, hasSession bool) (int64, error) {
+	if refreshToken == "" {
+		return 0, fmt.Errorf("refresh token not provided")
+	}
+	if token == "" {
+		return 0, fmt.Errorf("access token not provided")
+	}
 	userID, err := s.identifyAndStoreUser(token, refreshToken, userId, hasSession)
 	if err != nil {
 		s.logger.Printf("Error identifying and storing user: %v", err)
@@ -603,7 +609,7 @@ func (s *SpotifyService) fetchAllUserTracks(ctx context.Context) {
 		isNewTrack := currentTrack == nil ||
 			currentTrack.Name != track.Name ||
 			// just check the first one for now
-			currentTrack.Artist[0].Name != track.Artist[0].Name
+			(len(currentTrack.Artist) > 0 && len(track.Artist) > 0 && currentTrack.Artist[0].Name != track.Artist[0].Name)
 
 		// we stamp a track iff we've played more than half (or 30 seconds whichever is greater)
 		isStamped := track.ProgressMs > track.DurationMs/2 && track.ProgressMs > 30000
